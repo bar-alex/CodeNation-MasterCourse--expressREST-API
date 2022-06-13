@@ -1,0 +1,4 @@
+.env
+/node_modules
+src/debug.log
+src/db/debug.log
