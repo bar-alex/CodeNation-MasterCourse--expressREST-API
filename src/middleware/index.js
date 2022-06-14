@@ -38,7 +38,7 @@ exports.verifyPassword = async (req, res, next) => {
         const passComparison = await bcrypt.compare(providedPassword, storedPasswordHash);
 
         console.log('->verifyPassword:'
-            ,'\nstoredPass: ', storedPasswordHash
+            ,'\nstoredPass: ',storedPasswordHash
             ,'\ngiven-Pass: ',providedPassword
             ,'\ncomparison: ',passComparison);
 
@@ -88,5 +88,10 @@ exports.unHash = async (req,res,next) => {
 
 
 exports.login = (req,res,next) => {
-
+    try {
+        
+    } catch (error) {
+        console.log(error);
+        
+    }
 }
