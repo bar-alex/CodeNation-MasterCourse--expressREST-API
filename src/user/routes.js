@@ -3,7 +3,10 @@ const { createUser, getUsers, deleteUser, updateUser } = require("./controllers"
 const { hashPassword, verifyPassword, tokenCheck } = require("../middleware");
 const userRouter = Router();
 
+// will hash the password before createUser adds it to the database
 userRouter.post("/user", hashPassword, createUser);
+
+
 userRouter.get("/user", tokenCheck, getUsers);
 
 userRouter.put("/user", verifyPassword, updateUser);

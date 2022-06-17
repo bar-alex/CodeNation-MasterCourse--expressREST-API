@@ -1,0 +1,34 @@
+username:   String, required, unique
+email:      String, required, unique
+password:   String, required  // hash
+is_pending: Boolean, default: true
+is_admin:   Boolean, default: false
+
+
+
+GET     /api-help                                                       -> returns a webpage that describes the API entry points and usage
+POST    /login              -< {username, password}                     -> token
+GET     /user/list          -< admin token or self token not pending    -> list of all non admin users
+GET     /user/admin         -< requires admin token                     -> return list of admins
+GET     /user/pending       -< requires admin token                     -> return list of pending users
+POST    /user               -< user info                                -> adds user to list of users with pending:true
+PUT     /user?id=*user-id*  -< user info to change, self/admin token    -> updates user info
+            &approve        -< admin token                              -> adding the 'approve' parameter will switch 'pending' to false
+            &elevate        -< admin token                              -> adding the 'elevate' parameter will switch 'admin' to true
+DELETE  /user?id=*user-id*  -< requires admin token                     -> deletes user in database // or marks ad deleted
+
+
+
+- POST /user with {username, password, email}   will allow to add a user without requiring any credentials - user will be added to the database with a pending flag (not yet approved)
+- POST /login with a {username, password}       will login a user and a successful login will receive an authentication token
+
+- Logged in users will be known by transmitting the token in the 'Authorization' header
+
+- GET /user/list    from a logged in (token in 'Authorization' header) and not pending user will return a list of all non admin and non pending users
+- GET /user/admin   from a logged in user with admin flag on will return a list of all admin users
+- GET /user/pending from a logged in user with admin flag on will return a list of all pending users
+
+- PUT /user?id=*user-id* with {confirm_password, new_password, new_email}   by the logged in self user allow him to change his details
+- PUT /user?id=*user-id* with {new_password, new_email}                     by the logged in admin will allow him to change the users details
+- PUT /user?id=*user-id*&approve    by the logged in admin will approve the user by setting 'pending' to false
+- PUT /user?id=*user-id*&elevate    by the logged in admin will elevate the user to admin by setting 'admin' to true
