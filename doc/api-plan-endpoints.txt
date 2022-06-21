@@ -1,21 +1,28 @@
 username:   String, required, unique
 email:      String, required, unique
 password:   String, required  // hash
-is_pending: Boolean, default: true
-is_admin:   Boolean, default: false
+
+is_disabled:Boolean, default: false // won't be allowed to login
+//is_pending: Boolean, default: true  // limited "functionality" until approved by an admin
+is_admin:   Boolean, default: false // will have full admin powers
 
 
 
 GET     /api-help                                                       -> returns a webpage that describes the API entry points and usage
-POST    /login              -< {username, password}                     -> token
+
+POST    /user               -< user info                                -> adds user to list of users with pending:true // returns token for authentication
+POST    /login              -< {username, password}                     -> token for authentication on operations
+
 GET     /user/list          -< admin token or self token not pending    -> list of all non admin users
 GET     /user/admin         -< requires admin token                     -> return list of admins
-GET     /user/pending       -< requires admin token                     -> return list of pending users
-POST    /user               -< user info                                -> adds user to list of users with pending:true
-PUT     /user?id=*user-id*  -< user info to change, self/admin token    -> updates user info
-            &approve        -< admin token                              -> adding the 'approve' parameter will switch 'pending' to false
+//GET     /user/pending       -< requires admin token                     -> return list of pending users
+
+PUT     /user?id=*user-name*  -< user info to change, self/admin token    -> updates user info (just pass, email))
+//            &approve        -< admin token                              -> adding the 'approve' parameter will switch 'pending' to false
             &elevate        -< admin token                              -> adding the 'elevate' parameter will switch 'admin' to true
-DELETE  /user?id=*user-id*  -< requires admin token                     -> deletes user in database // or marks ad deleted
+            &disable        -< admin token                              -> will disable the user (user won't be able to login)
+            &enable         -< admin token                              -> will enable the user (user will be able to login)
+DELETE  /user?id=*user-name*  -< requires admin token                     -> deletes user in database // or marks ad deleted
 
 
 

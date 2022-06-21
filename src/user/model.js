@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
         required: true,
     },
     
+    is_disabled: {
+        type: Boolean,
+        default: false,
+    },
     is_pending: {
         type: Boolean,
         default: true,

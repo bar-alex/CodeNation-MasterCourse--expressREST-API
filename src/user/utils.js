@@ -1,6 +1,7 @@
 // require("mongoose");
 const User = require("./model");
 
+// returns the username for a specific user -- matching must be exact
 exports.getUserPassword = async (userName) => {
     console.log('->getUserPassword() is run with userName: ',userName);
     try {
@@ -18,7 +19,7 @@ exports.getUserPassword = async (userName) => {
         if ( userList.length!==1 )
             throw new Error(`getUserPassword.err -> for the username "${userName}" there must be one record in db: ${userList.length}`);
 
-        // only one element in the array, the object {username, email, password}
+        // only one element in the array, the object {username, email, password} // the password is actually the hash pf the password
         return userList[0].password
 
     } catch (error) {
