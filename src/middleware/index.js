@@ -31,14 +31,16 @@ exports.errMiddleware = (error, req, res, next) => {
 // will hash the password
 exports.hashPassword = async (req, res, next) => {
     try {
+        
+        // if there's no password to hash log and carry on
+        if ( req.body.password ) {
+            const hashedPass = await bcrypt.hash(req.body.password, 8);
+            req.body.password = hashedPass;
 
-        const hashedPass = await bcrypt.hash(req.body.password, 8);
-        console.log('pass vs hashedPass: ', req.body.password, hashedPass );
-        console.log(await bcrypt.hash(req.body.password, 8));
-        console.log(await bcrypt.hash(req.body.password, 8));
-        console.log(await bcrypt.hash(req.body.password, 8));
+        } else {
+            console.log("-> hashPassword(): req.body.password doesn't exist: ", req.body);
+        }
 
-        req.body.password = hashedPass;
         next();
 
     } catch (error) {
@@ -84,6 +86,8 @@ exports.tokenCheck = async (req, res, next) => {
         next()
     } catch (error) {
         console.log('-> tokenCheck, error: ', error);
+        error.status = 401;
+        error.errorText = "Authorization token is invalid: "+error.message;
         next(error);
         // res.send({error: error.code});
         // throw error;
@@ -96,7 +100,8 @@ exports.isUserSelfOrAdmin = async (req, res, next) => {
     try {
         if(!req.user) throw new Error("user object is not attached to req")
         
-        if( req.user.username === req.body.username || req.user.is_admin )
+        // token must belong to an admin or to the user provided as a parameter
+        if( req.user.is_admin || req.user.username === req.params.username )    // || req.user.username === req.body.username
             next()
         else 
             throw new Error("tokenized user is not owner nor an admin")
@@ -105,6 +110,8 @@ exports.isUserSelfOrAdmin = async (req, res, next) => {
     } catch (error) {
         console.log('-> isUserSelfOrAdmin, error: ', error.code, error);
         // res.send({error: error.code});
+        error.status = 403;
+        error.errorText = "Tokenized user is not an admin nor authorized for the operation"
         next(error);
     }
 };

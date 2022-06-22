@@ -8,43 +8,35 @@
 </head>
 <body>
         
-    <h2>API was created for the Code Nation Master course as an example to manipulate a database of users.</h2>
-    
+    <h3>API that was created for the Code Nation Master course as an example to manipulate a database of users.</h3>
+    <h4>It allows for the login of users and superusers (admins) and CRUD operations are allowed only to admins and the user affected by the operation (i.e. a normal user can update it's own info)
     <h4>These are the available paths for it's usage</h4>
     <pre>
+GET     /api-help                                                   -> returns a webpage that describes the API entry points and usage
 
-GET     /api-help                                                       -> returns a webpage that describes the API entry points and usage
-POST    /login              -< {username, password}                     -> token
-GET     /user/list          -< admin token or self token not pending    -> list of all non admin users
-GET     /user/admin         -< requires admin token                     -> return list of admins
-GET     /user/pending       -< requires admin token                     -> return list of pending users
-POST    /user               -< user info                                -> adds user to list of users with pending:true
-PUT     /user?id=*user-id*  -< user info to change, self/admin token    -> updates user info
-            &approve        -< admin token                              -> adding the 'approve' parameter will switch 'pending' to false
-            &elevate        -< admin token                              -> adding the 'elevate' parameter will switch 'admin' to true
-DELETE  /user?id=*user-id*  -< requires admin token                     -> deletes user in database // or marks ad deleted
+POST    /user           -< body:{username, email, password}         -> returns token    :: adds user to list of users
+POST    /login          -< body:{username, password}                -> returns token
 
+GET     /users          -< header:token                             -> depending on the token, returns a list of all or just non-admin users
+GET     /users/admin    -< header:token (admin)                     -> return list of admin users
+
+PUT     /user/*userName*  -< body:{email, password}, header:token (self/admin) -> updates user info
+DELETE  /user/*userName*  -< header:token (self/admin)             -> deletes the user in database
     </pre>
 
     <h4>Usage scenarios</h4>
     <pre>
-
-- POST /user with {username, password, email}   will allow to add a user without requiring any credentials - user will be added to the database with a pending flag (not yet approved)
-- POST /login with a {username, password}       will login a user and a successful login will receive an authentication token
+- POST /user with {username, password, email}   will allow to add a user without requiring any credentials
+- POST /login with a {username, password}       will login a user am=nd return an authentication token
 
 - Logged in users will be known by transmitting the token in the 'Authorization' header
 
-- GET /user/list    from a logged in (token in 'Authorization' header) and not pending user will return a list of all non admin and non pending users
-- GET /user/admin   from a logged in user with admin flag on will return a list of all admin users
-- GET /user/pending from a logged in user with admin flag on will return a list of all pending users
+- GET /users        (requires token in 'Authorization' header) will return a list of all users
+- GET /users/admin  (requires admin token) will return a list of all admin users
 
-- PUT /user?id=*user-id* with {confirm_password, new_password, new_email}   by the logged in self user allow him to change his details
-- PUT /user?id=*user-id* with {new_password, new_email}                     by the logged in admin will allow him to change the users details
-- PUT /user?id=*user-id*&approve    by the logged in admin will approve the user by setting 'pending' to false
-- PUT /user?id=*user-id*&elevate    by the logged in admin will elevate the user to admin by setting 'admin' to true
-
+- PUT /user/*userName* with {email, password} and header:token will update the specified user details if the token belongs to him or an admin
+- DELETE /user/*userName* with header:token will delete the user if the token belongs to him or to an admin
     </pre>
-
     
 </body>
 </html>

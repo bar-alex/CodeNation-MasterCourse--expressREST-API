@@ -6,6 +6,12 @@ const User = require("./model");
 // will add the user to the database
 exports.createUser = async (req, res) => {
     try {
+        console.log('\n-> createUser(), ',
+            '\n->   req.params: ', req.params,
+            '\n->   req.query: ', req.query,
+            '\n->   req.route.path: ',req.route.path,
+            '\n->   req.body: ',req.body);
+
         const userObj = {
             username: req.body.username,
             password: req.body.password,    // already hashed by middleware
@@ -31,34 +37,27 @@ exports.createUser = async (req, res) => {
 
 exports.getUsers = async (req, res) => {
     try {
-        console.log('-> getUsers, ',
+        console.log('\n-> getUsers, ',
             '\n->   req.params: ', req.params,
             '\n->   req.query: ',req.query,
-            '\n->   req.route.path: ',req.route.path,
-        );
+            '\n->   req.route.path: ',req.route.path);
         // builds filters to use in find()
         const condText = 
             // user is not admin, will retrieve only normal users
-            (!req.user.is_amdin)                ? {is_admin: false} :
+            (!req.user.is_admin)                ? {$or: [{is_admin: false},{is_admin: {$exists:false}}]} :
             // user is admin and the request was to only show admins
-            (req.route.path == '/users/admin')  ? {is_admin: true} :
+            (req.route.path === '/users/admin')  ? {is_admin: true} :
             // user is admin, so retrieve everything
             {};
-
-        // if (!!userObj) 
-        //     if (userObj.username && typeof userObj.username === 'string')
-        //         condText.username = RegExp( (userObj.username.slice(0,1)==='*' ? userObj.username.slice(1) : '^'+userObj.username),'i')
-        //     if (userObj.email && typeof userObj.email === 'string')
-        //         condText.email = RegExp( (userObj.email.slice(0,1)==='*' ? userObj.email.slice(1) : '^'+userObj.email),'i')
-
-        //console.log('-> getUsers, condText: ', condText);
         
         const userList = await User.find( condText );
         
         console.log('\n-> getUsers, condText: ', condText, 'userList: ');
-        console.table( userList.map( x => { return {username: x._doc.username, email: x._doc.email, password: x._doc.password} } ) );
+        // console.table( userList.map( x => { return {username: x._doc.username, email: x._doc.email, password: x._doc.password} } ) );
+        console.table( userList.map( ({_doc:it}) => { return {username: it.username, email: it.email, is_admin: it.is_admin, is_disabled: it.is_disabled, password: it.password} } ) );
 
-        res.send( userList )
+        // send back a list of the users with the useful properties
+        res.send( userList.map( ({_doc:it}) => {delete it.password; delete it.__v; return it} ) )
 
     } catch (error) {
         console.log('\n-> getUsers, error: ', error);
@@ -71,7 +70,20 @@ exports.getUsers = async (req, res) => {
 // will delete the specified user from the database
 exports.deleteUser = async (req, res) => {
     try {
-        
+        console.log('\n-> deleteUser(), ',
+            '\n->   req.params: ', req.params,
+            '\n->   req.query: ', req.query,
+            '\n->   req.route.path: ',req.route.path,
+            '\n->   req.body: ',req.body);
+
+            const result = await User.deleteOne( {username: req.params.username } ); // returns '1': deleted a doc, '0': nothing matched
+            console.log(`\n-> deleteUser, result: `, result);
+
+            if (result.deletedCount === 1) 
+                res.send( {message: `user ${req.params.username} was deleted`} )
+            else 
+                res.status(404).send( {message: `username ${req.params.username} was not found in database`} )
+
     } catch (error) {
         console.log('\n-> deleteUser, error: ', error);
         res.status(500).send(error);
@@ -83,35 +95,35 @@ exports.deleteUser = async (req, res) => {
 // will update user data, just -> password and or email
 exports.updateUser = async (req, res) => {
     try {
-        console.log('->updateUser() is running.');
-        // console.log(req.body);
-        // res.send({message: "End of controller"});
-        const userObj = {
-            username: req.body.username,
-            isPassValidated: req.body._passwordValidated,    // added by middleware->verifyPassword()
-            email: req.body.email,
-            password: req.body.password,            
-        }
-        
-        // builds filters to use in find()
-        const condText = {};
-        if (!!userObj) 
-            if (userObj.username && typeof userObj.username === 'string')
-                condText.username = RegExp( (userObj.username.slice(0,1)==='*' ? userObj.username.slice(1) : '^'+userObj.username),'i')
-            if (userObj.email && typeof userObj.email === 'string')
-                condText.email = RegExp( (userObj.email.slice(0,1)==='*' ? userObj.email.slice(1) : '^'+userObj.email),'i')
+        console.log('\n-> updateUser(), ',
+            '\n->   req.params: ', req.params,
+            '\n->   req.query: ', req.query,
+            '\n->   req.route.path: ',req.route.path,
+            '\n->   req.body: ',req.body);
 
-        //console.log('-> getUsers, condText: ', condText);
-        const userList = await User.find( condText );
-        
-        console.log('\n-> getUsers, condText: ', condText, 'userList: ');
-        console.table( userList.map( x => { return {username: x._doc.username, email: x._doc.email, password: x._doc.password} } ) );
+        // create object to be used in the update
+        const userObj = {};
+        if (req.body.email) userObj.email = req.body.email;
+        if (req.body.password) userObj.password = req.body.password;
 
-        res.send( userList )
+        // object doesn't contain any properties to be used in the update
+        if ( !Object.keys(userObj).length ) throw new Error(`no data was provided to update`)
+        
+        console.log('-> updateUser, userObj: ',userObj);
+        // the update command, returns the upadted document
+        const updatedDoc = await User.findOneAndUpdate( 
+                { username: req.params.username }, 
+                { $set: userObj }, 
+                { new: true, } 
+            ).select('-__v');
+
+        console.log('-> updateUser, updatedDoc: ', updatedDoc);
+
+        res.send( updatedDoc )
 
     } catch (error) {
         console.log('\n-> updateUser, error: ', error);
-        res.status(500).send(error);
+        res.status(500).send( {name: error.name, message: error.message} );
         // res.send({error: error.code});        
     }
 };
