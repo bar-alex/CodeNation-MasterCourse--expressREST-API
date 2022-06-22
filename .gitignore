@@ -2,3 +2,4 @@
 /node_modules
 src/debug.log
 src/db/debug.log
+/src/notneeded_*

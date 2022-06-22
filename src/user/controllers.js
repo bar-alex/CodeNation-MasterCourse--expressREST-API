@@ -23,28 +23,33 @@ exports.createUser = async (req, res) => {
 
     } catch (error) {
         console.log('\n-> createUser, error: ', error);
-        res.send({error: error.code});
+        res.status(500).send(error);
+        // res.send({error: error.code});
     }
 };
 
 
 exports.getUsers = async (req, res) => {
     try {
-        // console.log(req.body);
-        // res.send({message: "End of controller"});
-        const userObj = {
-            username: req.body.username,
-            email: req.body.email,
-            // password: req.body.password,            
-        }
-        
+        console.log('-> getUsers, ',
+            '\n->   req.params: ', req.params,
+            '\n->   req.query: ',req.query,
+            '\n->   req.route.path: ',req.route.path,
+        );
         // builds filters to use in find()
-        const condText = {};
-        if (!!userObj) 
-            if (userObj.username && typeof userObj.username === 'string')
-                condText.username = RegExp( (userObj.username.slice(0,1)==='*' ? userObj.username.slice(1) : '^'+userObj.username),'i')
-            if (userObj.email && typeof userObj.email === 'string')
-                condText.email = RegExp( (userObj.email.slice(0,1)==='*' ? userObj.email.slice(1) : '^'+userObj.email),'i')
+        const condText = 
+            // user is not admin, will retrieve only normal users
+            (!req.user.is_amdin)                ? {is_admin: false} :
+            // user is admin and the request was to only show admins
+            (req.route.path == '/users/admin')  ? {is_admin: true} :
+            // user is admin, so retrieve everything
+            {};
+
+        // if (!!userObj) 
+        //     if (userObj.username && typeof userObj.username === 'string')
+        //         condText.username = RegExp( (userObj.username.slice(0,1)==='*' ? userObj.username.slice(1) : '^'+userObj.username),'i')
+        //     if (userObj.email && typeof userObj.email === 'string')
+        //         condText.email = RegExp( (userObj.email.slice(0,1)==='*' ? userObj.email.slice(1) : '^'+userObj.email),'i')
 
         //console.log('-> getUsers, condText: ', condText);
         
@@ -57,7 +62,8 @@ exports.getUsers = async (req, res) => {
 
     } catch (error) {
         console.log('\n-> getUsers, error: ', error);
-        res.send({error: error.code});
+        res.status(500).send(error);
+        // res.send({error: error.code});
     }
 };
 
@@ -68,7 +74,8 @@ exports.deleteUser = async (req, res) => {
         
     } catch (error) {
         console.log('\n-> deleteUser, error: ', error);
-        res.send({error: error.code});        
+        res.status(500).send(error);
+        // res.send({error: error.code});
     }
 };
 
@@ -104,39 +111,32 @@ exports.updateUser = async (req, res) => {
 
     } catch (error) {
         console.log('\n-> updateUser, error: ', error);
-        res.send({error: error.code});        
+        res.status(500).send(error);
+        // res.send({error: error.code});        
     }
 };
-
-
-// will switch is_pending to false -- only by an admin
-// exports.approveUser = async (req,rest) => {
-//     try {
-        
-//     } catch (error) {
-        
-//     }
-// };
 
 
 // will set is_admin to true or false -- only by an admin
-exports.setAdminUser = async (req,rest) => {
+exports.setUserAdmin = async (req,rest) => {
     try {
         
     } catch (error) {
-        console.log('\n-> setAdminUser, error: ', error);
-        res.send({error: error.code});        
+        console.log('\n-> setUserAdmin, error: ', error);
+        res.status(500).send(error);
+        // res.send({error: error.code});        
     }
 };
 
 
-// will set is_enabled to true or false -- only by an admin
-exports.setEnabledUser = async (req,rest) => {
+// will set is_enabled to true -- only by an admin
+exports.setUserEnabled = async (req,rest) => {
     try {
         // get
     } catch (error) {
-        console.log('\n-> setEnabledUser, error: ', error);
-        res.send({error: error.code});        
+        console.log('\n-> setUserEnabled, error: ', error);
+        res.status(500).send(error);
+        // res.send({error: error.code});        
     }
 };
 
@@ -145,15 +145,14 @@ exports.setEnabledUser = async (req,rest) => {
 exports.sendToken = async (req, res) => {
     try {
         // if user object is not in rq then find the user by username
-        if(!req.user) 
-            req.user = await User.findOne({username: req.body.username});
+        if(!req.user) req.user = await User.findOne({username: req.body.username});
         // generate the token to send back
         const token = jwt.sign({ id: req.user._id }, process.env.SECRET);
         // send the user and the token
         res.send({ user: req.user, token });    
 
     } catch (error){
-        console.log('\n-> sendBackToken, error: ', error);
-        res.send({error: error.code});
+        console.log('\n-> sendToken, error: ', error);
+        res.status(500).send(error);
     }
 }

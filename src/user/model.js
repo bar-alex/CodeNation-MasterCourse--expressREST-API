@@ -20,10 +20,6 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    is_pending: {
-        type: Boolean,
-        default: true,
-    },
     is_admin: {
         type: Boolean,
         default: false,

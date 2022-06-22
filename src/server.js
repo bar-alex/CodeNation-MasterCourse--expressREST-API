@@ -9,8 +9,6 @@ app.use(cors());
 
 // these 3 endpoints map to the same static webpage - documenting the usage of the API
 app.use('/info',express.static('public'));
-app.use('/help',express.static('public'));
-app.use('/help-test',express.static('public'));
 app.use('/api-help',express.static('public'));
 
 // enable json and link the user endpoints

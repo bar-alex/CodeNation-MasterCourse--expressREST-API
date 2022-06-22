@@ -3,6 +3,31 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../user/model");
 
+
+// error middleware -- only run by next(error)
+exports.errMiddleware = (error, req, res, next) => {
+    
+    console.log("\n-> Error Handling Middleware called");
+    console.log('->   Path: ', req.path);
+    console.error('->   Error: ', error);
+
+    // if the error object as a custom status property the use that to send the response
+    let statusCode = error.status ? error.status : 500;
+    let returnData = error.errorText ? { message: error.errorText } : { name: error.name, message: error.message };
+    
+    // send the response
+    res.status(statusCode).send(returnData);
+
+    // if (error.type == 'redirect')
+    //     res.redirect('/error')
+
+    //     else if (error.type == 'time-out') // arbitrary condition check
+    //     res.status(408).send(error)
+    // else
+    //     res.status(500).send(error)
+}
+
+
 // will hash the password
 exports.hashPassword = async (req, res, next) => {
     try {
@@ -18,7 +43,7 @@ exports.hashPassword = async (req, res, next) => {
 
     } catch (error) {
         console.log(error);
-        next();
+        next(error);
     }
 };
 
@@ -30,10 +55,12 @@ exports.comparePassword = async (req,res,next) => {
         const result = await bcrypt.compare( req.body.password, user.password );
         if (!result)
             throw new Error("Passwords do not match")
-        next()            
+        next();
     } catch (error) {
         console.log('-> comparePassword, error: ', error);
-        res.send({error: error.code})
+        error.status = 401;
+        error.errorText = "Provided password is incorrect"
+        next(error);
     }
 };
 
@@ -45,81 +72,60 @@ exports.tokenCheck = async (req, res, next) => {
         const token = req.header("Authorization");
         console.log('-> tokenCheck, token: ', token);
         // if token not provided throw an error
-        if(!token) 
-            throw new Error("Authorization header doesn't have a token")
-
+        if(!token) throw new Error("Authorization header doesn't have a token");
+        // decode the token and get an object with id property which has the value of the user id
         const decodedToken = jwt.verify(token, process.env.SECRET);
         console.log('-> tokenCheck, decodedToken: ', decodedToken);
         // assign the user ot the request
         req.user = await User.findById( decodedToken.id );
-        console.log('-> tokenCheck, user found: ', user);
+        console.log('-> tokenCheck, user found: ', req.user);
+        if (!req.user) throw new Error("User wasn't found for the tokenized id");
         // exit middleware
         next()
     } catch (error) {
         console.log('-> tokenCheck, error: ', error);
-        res.send({error: error.code});
+        next(error);
+        // res.send({error: error.code});
+        // throw error;
     }
 };
 
 
 // will validate that the user is self or admin
-exports.updateBySelfOrAdmin = async (req, res, next) => {
+exports.isUserSelfOrAdmin = async (req, res, next) => {
     try {
-        if(!req.user) 
-            throw new Error("user object is not attached to req")
+        if(!req.user) throw new Error("user object is not attached to req")
         
-            if( req.user.username === req.body.username || req.user.is_admin )
+        if( req.user.username === req.body.username || req.user.is_admin )
             next()
         else 
-            throw new Error("tokenized user is not admin and it doesn't own the user details")
+            throw new Error("tokenized user is not owner nor an admin")
+            // next( "tokenized user is not admin and it doesn't own the user details" )
 
     } catch (error) {
-        console.log('-> tokenCheck, error: ', error);
-        res.send({error: error.code});
-        
+        console.log('-> isUserSelfOrAdmin, error: ', error.code, error);
+        // res.send({error: error.code});
+        next(error);
     }
-
 };
 
 
-// // will verify the password stored against the old_password provided
-// exports.verifyPassword = async (req, res, next) => {
-//     try {
-//         console.log('->verifyPassword started and getUserPassword is ',getUserPassword);
-
-//         // const providedPassword = req.body.old_password && await bcrypt.hash(req.body.old_password, 8);
-//         const providedPassword = req.body.old_password;
-//         const storedPasswordHash = await getUserPassword(req.body.username);   // might return null if problems with username
+// will validate that the user is admin
+exports.isUserAdmin = async (req, res, next) => {
+    try {
+        if(!req.user) throw new Error("user object is not attached to req")
         
-//         if (!storedPasswordHash || typeof storedPasswordHash!=="string") 
-//             next( new Error("verifyPassword->Error: retrieving stored password") );
+        if( req.user.is_admin )
+            next()
+        else 
+            throw new Error("tokenized user is not admin")
 
-//         const passComparison = await bcrypt.compare(providedPassword, storedPasswordHash);
+    } catch (error) {
+        console.log('-> isUserAdmin, error: ', error.code, error);
+        // res.send({error: error.code});
+        error.status = 403;
+        error.errorText = "Tokenized user is not an admin"
+        next(error);
+    }
 
-//         console.log('->verifyPassword:'
-//             ,'\nstoredPass: ',storedPasswordHash
-//             ,'\ngiven-Pass: ',providedPassword
-//             ,'\ncomparison: ',passComparison);
-
-//         // req.body._passwordValidated = ( providedPassword === storedPasswordHash )
-//         if ( !passComparison )
-//             next( new Error("verifyPassword->Error: password does not match") );
-
-//         // everything's ok, move along
-//         next();
-
-//     } catch (error) {
-//         console.log(error);
-//         next(error);
-//     }
-// };
-
-
-// exports.login = (req,res,next) => {
-//     try {
-        
-//     } catch (error) {
-//         console.log(error);
-        
-//     }
-// }
+};
