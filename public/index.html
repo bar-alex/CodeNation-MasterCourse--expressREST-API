@@ -10,7 +10,7 @@
         
     <h3>API that was created for the Code Nation Master course as an example to manipulate a database of users.</h3>
     <h4>It allows for the login of users and superusers (admins) and CRUD operations are allowed only to admins and the user affected by the operation (i.e. a normal user can update it's own info)
-    <h4>These are the available paths for it's usage</h4>
+    <h4>These are the available paths for it's usage ( <pre style="display: inline">-< input; -> output</pre> )</h4>
     <pre>
 GET     /api-help                                                   -> returns a webpage that describes the API entry points and usage
 
@@ -27,7 +27,7 @@ DELETE  /user/*userName*  -< header:token (self/admin)             -> deletes th
     <h4>Usage scenarios</h4>
     <pre>
 - POST /user with {username, password, email}   will allow to add a user without requiring any credentials
-- POST /login with a {username, password}       will login a user am=nd return an authentication token
+- POST /login with {username, password}       will login a user am=nd return an authentication token
 
 - Logged in users will be known by transmitting the token in the 'Authorization' header
 

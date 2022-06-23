@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 5001;
 const userRouter = require("./user/routes");
 
-app.use(cors());
+// app.use(cors());
 
 // these 3 endpoints map to the same static webpage - documenting the usage of the API
 app.use('/info',express.static('public'));

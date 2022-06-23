@@ -7,7 +7,7 @@ A simple express and NodeJS app to create a server that serves a REST API
 
 It allows for the login of users and superusers (admins) and CRUD operations are allowed only to admins and the user affected by the operation (i.e. a normal user can update it's own info)
 
-#### These are the paths available for it's usage
+#### These are the paths available for it's usage (-< input; -> output)
 
 ```
 GET     /api-help                                  -> returns a webpage that describes the API entry points and usage
