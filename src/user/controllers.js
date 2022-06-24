@@ -41,10 +41,13 @@ exports.getUsers = async (req, res) => {
             '\n->   req.params: ', req.params,
             '\n->   req.query: ',req.query,
             '\n->   req.route.path: ',req.route.path);
+
         // builds filters to use in find()
         const condText = 
             // if there's a username as a parameter then will make that the condition to return that user's data
             (req.params.username)               ? { username: req.params.username } :
+            // if the request was to retrieve the user of the token -- the username is in the user property, put there by tokenCheck
+            (req.route.path === "/user/token") ? { username: req.user.username } :
             // user is not admin, will retrieve only normal users
             (!req.user.is_admin)                ? {$or: [{is_admin: false},{is_admin: {$exists:false}}]} :
             // user is admin and the request was to only show admins
