@@ -33,6 +33,10 @@ userRouter.get("/users", tokenCheck, errMiddleware, getUsers);
 // will return the list of admins // logged in user must be an admin
 userRouter.get("/users/admin", tokenCheck, isUserAdmin, errMiddleware, getUsers);
 
+
+// will change information for the provided username
+userRouter.get("/user/:username", tokenCheck, isUserSelfOrAdmin, errMiddleware, getUsers)
+
 // will change information for the provided username
 userRouter.put("/user/:username", tokenCheck, isUserSelfOrAdmin, hashPassword, errMiddleware, updateUser)
 

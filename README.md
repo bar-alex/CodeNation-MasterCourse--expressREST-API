@@ -18,6 +18,7 @@ POST    /login          -< body:{username, password}           -> returns token
 GET     /users          -< header:token            -> depending on the token, returns a list of all or just non-admin users
 GET     /users/admin    -< header:token (admin)    -> return list of admin users
 
+GET     /user/*userName*  -< header:token (self/admin) -> returns the user's details, without the password
 PUT     /user/*userName*  -< body:{email, password}, header:token (self/admin) -> updates user info
 DELETE  /user/*userName*  -< header:token (self/admin) -> deletes the user in database
 ```
@@ -32,6 +33,8 @@ DELETE  /user/*userName*  -< header:token (self/admin) -> deletes the user in da
 - GET /users        (requires token in 'Authorization' header) will return a list of all users
 - GET /users/admin  (requires admin token) will return a list of all admin users
 
+- GET /user/*userName* with header:token will return the user's details (except password) if the token belongs to him or 
+to an admin
 - PUT /user/*userName* with {email, password} and header:token will update the specified user details if the token belongs 
 to him or an admin
 - DELETE /user/*userName* with header:token will delete the user if the token belongs to him or to an admin
